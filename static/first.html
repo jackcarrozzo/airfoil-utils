@@ -1,0 +1,119 @@
+<!doctype html>
+<html>
+<head>
+  <title>Graph 3D line demo</title>
+
+  <style>
+    body {font: 10pt arial;}
+  </style>
+
+  <script type="text/javascript" src="js/vis.js"></script>
+
+  <script type="text/javascript">
+    var data = null;
+   var graph = null;
+   var loaded_data=[];
+
+   var naca_pts=[[1.0,0.00084],[0.95033,0.00855],[0.90054,0.01575],[0.80078,0.02858],
+                 [0.70081,0.03942],[0.60068,0.0482],[0.50039,0.05473],[0.4,0.05869],
+                 [0.299,0.05875],[0.24852,0.05677],[0.19809,0.0532],[0.14778,0.04776],
+                 [0.09768,0.03987],[0.07273,0.03471],[0.04794,0.02829],[0.02337,0.01944],
+                 [0.01128,0.0138],[0.0,0.0],[0.01372,-0.01134],[0.02663,-0.01493],
+                 [0.05206,-0.01891],[0.07727,-0.02111],[0.10232,-0.02237],
+                 [0.15222,-0.02338],[0.20191,-0.0232],[0.25148,-0.02239],[0.301,-0.02125],
+                 [0.4,-0.01869],[0.49961,-0.01585],[0.59932,-0.01264],[0.69919,-0.00942],
+                 [0.79922,-0.00636],[0.89946,-0.00353],[0.94967,-0.00217],[1.0,-0.00084]];
+
+   var pairi, thispair, xval, yval;
+   var thisz;
+   for (thisz=0.0;thisz<4.0;thisz+=0.1) {
+       for (pairi in naca_pts) {
+           thispair=naca_pts[pairi];
+
+           xval=thispair[0];
+           yval=thispair[1];
+
+           loaded_data.push({
+               x: thisz,
+               y: xval,
+               z: yval
+           });
+       }
+   }
+
+   // Called when the Visualization API is loaded.
+    function drawVisualization() {
+      // Create and populate a data table.
+      data = new vis.DataSet();
+
+      // create some nice looking data with sin/cos
+      /*var steps = 500;
+      var axisMax = 314;
+      var tmax = 4 * 2 * Math.PI;
+      var axisStep = axisMax / steps;
+      for (var t = 0; t < tmax; t += tmax / steps) {
+        var r = 1;
+        var x = r * Math.sin(t);
+        var y = r * Math.cos(t);
+        var z = t / tmax;
+        data.add({x:x,y:y,z:z})
+      }*/
+
+        var triplet, this_trip;
+        for (triplet in loaded_data) {
+            this_trip=loaded_data[triplet];
+            data.add({
+                x: this_trip.x,
+                y: this_trip.y,
+                z: this_trip.z
+            })
+        }
+
+      // specify options
+      var options = {
+        width:  '1000px',
+        height: '600px',
+        style: 'line',
+          zMin: -0.5,
+          zMax: 0.5,
+        showPerspective: false,
+        showGrid: true,
+        keepAspectRatio: true,
+        verticalRatio: 0.5
+      };
+
+      // create our graph
+      var container = document.getElementById('mygraph');
+      graph = new vis.Graph3d(container, data, options);
+
+      graph.setCameraPosition(0.4, undefined, undefined);
+    }
+
+   function handle_resp() {
+       console.log("got back:", this.responseText);
+       var robj=JSON.parse(this.responseText);
+       console.log("obJ:",robj);
+
+       loaded_data=robj;
+       console.log("loaded", loaded_data.length, "data pts.")
+
+       drawVisualization();
+   }
+
+   function nab_data() {
+       console.log("fetching data...");
+
+       var req = new XMLHttpRequest();
+       req.addEventListener("load", handle_resp);
+       req.open("GET", "http://localhost:8803/plotdata/elk");
+       req.send();
+   }
+  </script>
+</head>
+
+<body onload="nab_data()">
+<div id="mygraph"></div>
+
+<div id="info"></div>
+</body>
+</html>
