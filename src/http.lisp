@@ -2,7 +2,8 @@
 (defpackage airfoil-utils.http
   (:use :cl
         :ningle
-        :clack)
+        :clack
+        :airfoil-utils)
   (:import-from :lack.request
                 :request
                 :request-method
@@ -19,7 +20,6 @@
 
 (defvar *app* (make-instance 'ningle:<app>))
 
-
 (defun set-cors-headers ()
   (setf (lack.response:response-headers *response*)
         (append (lack.response:response-headers *response*)
@@ -28,17 +28,7 @@
         (append (lack.response:response-headers *response*)
                 (list :access-control-allow-origin "*"))))
 
-#|(setf (ningle:route *app* "/")
-      #'(lambda (params)
-          (declare (ignore params))
-
-          "hi from airfoil-utils! put vis page here n stuff."))|#
-
-(defun fetch-naca-pts (label)
-  (format t "naca label: ~a~%" label)
-  '((1.0 0.0)
-    (1.0 1.1)))
-
+;; the "current" airfoil is the one we perform mods on
 (setf (ningle:route *app* "/airfoil-pts/:arg")
       #'(lambda (params)
           (set-cors-headers)
@@ -46,18 +36,22 @@
             (cl-json:encode-json-to-string
              `((plot--set . ,arg)
                (plot--pts . ,(if (string= arg "current")
-                                 airfoil-utils.math:*plot-pts*
-                                 (fetch-naca-pts arg))))))))
+                                 airfoil-utils:*plot-pts*
+                                 (airfoil-utils.airfoils:fetch-airfoil-pts
+                                  (string-downcase arg)))))))))
 
-@export
 (defparameter +clack-h+ nil)
+(defparameter +httpd-started+ nil)
 
 @export
 (defun start-http (&key (port 8803))
   (setf +clack-h+
         (clack:clackup *app*
                        :server :toot
-                       :port port)))
+                       :port port))
+  (setf +httpd-started+ t))
+
 @export
 (defun stop-http ()
-  (clack:stop +clack-h+))
+  (clack:stop +clack-h+)
+  (setf +httpd-started+ nil))

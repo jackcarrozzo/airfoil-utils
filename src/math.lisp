@@ -9,9 +9,6 @@
 
 ;; todo: add default transforms for sweep, angle adj, width, twist
 
-@export
-(defvar *plot-pts* '((0.0 0.0)))
-
 ;; todo:
 @export
 (defvar +naca2408-pts+ '())
